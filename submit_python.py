@@ -1,18 +1,19 @@
 from sklearn import datasets, linear_model, preprocessing
 from sklearn.neural_network import MLPRegressor
+from sklearn.ensemble import RandomForestRegressor, GradientBoostingRegressor
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler
-from sklearn.metrics import r2_score
+from sklearn.metrics import r2_score, mean_squared_error
 import pandas as pd
 import numpy as np
 
-data = pd.read_csv("./YEAR_DATA.csv", encoding="cp949")
+data = pd.read_csv("./CALL_NDELIVERY_07MONTH.csv")
 data = data.drop('시도', axis=1)
 
+# 계절 추가
 date = list(data.일자)
 season = list()
 
-# 계절 추가
 for x in date:
     month = int(x % 10000 / 100)
     if month in [3, 4, 5]:
@@ -23,7 +24,7 @@ for x in date:
         season.append('가을')
     else:
         season.append('겨울')
-    
+
 data['계절'] = season
 
 # 공휴일 추가
@@ -37,7 +38,7 @@ for x in date:
         holiday.append(1)
     else:
         holiday.append(0)
-    
+
 data['공휴일'] = holiday
 
 # 일자 -> 월로 바꾸기
@@ -47,7 +48,7 @@ months = list()
 for x in date:
     month = int(x % 10000 / 100)
     months.append(month)
-    
+
 data['월'] = months
 
 # 업종 선택
@@ -66,8 +67,8 @@ data_dummy = data_dummy.drop('업종', axis=1)
 features = data_dummy.drop('통화건수', axis=1)
 #print(features)
 
-X = features[:100001].values
-y = data_c['통화건수'][:100001].values
+X = features.values
+y = data_c['통화건수'].values
 
 X_train, X_test, y_train, y_test = train_test_split(X, y)
 
@@ -81,19 +82,19 @@ X_train = scaler.transform(X_train)
 X_test = scaler.transform(X_test)
 
 
-# compare training models
 models = [
     linear_model.LinearRegression(), 
-    MLPRegressor(), 
-    MLPRegressor(hidden_layer_sizes=[512, 4], alpha=0.005, random_state=42), 
-    MLPRegressor(hidden_layer_sizes=[48, 4], max_iter=5000, alpha=0.005, random_state=42), 
     MLPRegressor(hidden_layer_sizes=[512, 4], max_iter=5000, alpha=0.005, random_state=42), 
-    MLPRegressor(hidden_layer_sizes=[1024, 4], max_iter=5000, alpha=0.005, random_state=42),
-    MLPRegressor(hidden_layer_sizes=[1024, 512, 4], max_iter=5000, alpha=0.005, random_state=42),
+    RandomForestRegressor(n_estimators=100, random_state=0), 
+    GradientBoostingRegressor(n_estimators=100, max_depth=10, criterion='mse')
 ]
 
-for m in models:
-    m.fit(X_train, y_train)
-    print(m.__class__)
-    print('training 모델 점수: {:.2f}'.format(r2_score(y_train, m.predict(X_train))))
-    print('testing 점수: {:.2f}'.format(r2_score(y_test, m.predict(X_test))))
+with open('./model_scores.txt', 'w') as f:
+    for m in models:
+        m.fit(X_train, y_train)
+        f.write(m.__class__ + '\n')
+        f.write('Training Set Mean Squared Error: {:.2f}\n'.format(mean_squared_error(y_train, m.predict(X_train))))
+        f.write('training Set R^2: {:.2f}\n'.format(r2_score(y_train, m.predict(X_train))))
+
+        f.write('Training Set Mean Squared Error: {:.2f}\n'.format(mean_squared_error(y_test, m.predict(X_test))))
+        f.write('testing R^2: {:.2f}\n\n'.format(r2_score(y_test, m.predict(X_test))))
