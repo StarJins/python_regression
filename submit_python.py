@@ -92,7 +92,7 @@ models = [
 with open('./model_scores.txt', 'w') as f:
     for m in models:
         m.fit(X_train, y_train)
-        f.write(m.__class__ + '\n')
+        f.write(str(m.__class__) + '\n')
         f.write('Training Set Mean Squared Error: {:.2f}\n'.format(mean_squared_error(y_train, m.predict(X_train))))
         f.write('training Set R^2: {:.2f}\n'.format(r2_score(y_train, m.predict(X_train))))
 
