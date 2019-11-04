@@ -100,14 +100,11 @@ X_test = scaler.transform(X_test)
 
 from pyspark.sql import SparkSession
 # spark context
-spark = SparkSession.builder.appName("Regression_worker_3").getOrCreate()
+spark = SparkSession.builder.appName("Regression_worker_2").getOrCreate()
 sc = spark.sparkContext
 
 # model 초기화
-linear_model = GridSearchCV(sc, LinearRegression(), {})
-MLP_model = GridSearchCV(sc, MLPRegressor(alpha=0.005, random_state=42), {'hidden_layer_sizes':[[512, 4], [256, 4]], 'max_iter':[5000]}) 
-RandomForest_model = GridSearchCV(sc, RandomForestRegressor(n_estimators=100, random_state=0), {})
-GradientBoosting_model = GridSearchCV(sc, GradientBoostingRegressor(n_estimators=100, max_depth=10, criterion='mse'), {})
+MLP_model = GridSearchCV(sc, MLPRegressor(alpha=0.005, random_state=42), {'hidden_layer_sizes':[[512, 4], [256, 4]], 'max_iter':[5000]})
 
 #linear_model.fit(X_train, y_train)
 MLP_model.fit(X_train, y_train)
@@ -115,15 +112,10 @@ MLP_model.fit(X_train, y_train)
 #GradientBoosting_model.fit(X_train, y_train)
     
 # print scores
-models = [
-#    linear_model,
-    MLP_model
-#    RandomForest_model,
-#    GradientBoosting_model
-]
-with open('./model_scores.txt', 'w') as f:
+models = [MLP_model]
+
+with open('./model_scores_worker_2.txt', 'w') as f:
     for m in models:
-        #f.write(str(m) + '\n')
         f.write('Training Set Mean Squared Error: {:.2f}\n'.format(mean_squared_error(y_train, m.predict(X_train))))
         f.write('Training Set R^2: {:.2f}\n'.format(r2_score(y_train, m.predict(X_train))))
 

@@ -1,0 +1,7 @@
+Training Set Mean Squared Error: 31.38
+Training Set R^2: 0.88
+Testing Set Mean Squared Error: 32.47
+testing Set R^2: 0.86
+
+
+Running Time: 143.39

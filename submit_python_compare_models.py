@@ -15,7 +15,7 @@ import time
 # 실행시간 측정
 start = time.time()
 
-data = pd.read_csv("./CALL_NDELIVERY_07MONTH.csv")
+data = pd.read_csv("./CALL_NDELIVERY_10MONTH.csv")
 data = data.drop('시도', axis=1)
 
 # 계절 추가
@@ -100,28 +100,28 @@ X_test = scaler.transform(X_test)
 
 from pyspark.sql import SparkSession
 # spark context
-spark = SparkSession.builder.appName("Regression_worker_3").getOrCreate()
+spark = SparkSession.builder.appName("Regression_compare_models").getOrCreate()
 sc = spark.sparkContext
 
 # model 초기화
 linear_model = GridSearchCV(sc, LinearRegression(), {})
-MLP_model = GridSearchCV(sc, MLPRegressor(alpha=0.005, random_state=42), {'hidden_layer_sizes':[[512, 4], [256, 4]], 'max_iter':[5000]}) 
+MLP_model = GridSearchCV(sc, MLPRegressor(hidden_layer_sizes=[512, 4], max_iter=5000, alpha=0.005, random_state=42), {}) 
 RandomForest_model = GridSearchCV(sc, RandomForestRegressor(n_estimators=100, random_state=0), {})
 GradientBoosting_model = GridSearchCV(sc, GradientBoostingRegressor(n_estimators=100, max_depth=10, criterion='mse'), {})
 
-#linear_model.fit(X_train, y_train)
+linear_model.fit(X_train, y_train)
 MLP_model.fit(X_train, y_train)
-#RandomForest_model.fit(X_train, y_train)
-#GradientBoosting_model.fit(X_train, y_train)
+RandomForest_model.fit(X_train, y_train)
+GradientBoosting_model.fit(X_train, y_train)
     
 # print scores
 models = [
-#    linear_model,
-    MLP_model
-#    RandomForest_model,
-#    GradientBoosting_model
+    linear_model,
+    MLP_model,
+    RandomForest_model,
+    GradientBoosting_model
 ]
-with open('./model_scores.txt', 'w') as f:
+with open('./model_scores_compare.txt', 'w') as f:
     for m in models:
         #f.write(str(m) + '\n')
         f.write('Training Set Mean Squared Error: {:.2f}\n'.format(mean_squared_error(y_train, m.predict(X_train))))
